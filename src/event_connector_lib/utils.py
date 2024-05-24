@@ -1,7 +1,8 @@
-class Event:
-    data = None
+from typing import Any, Dict
 
-    def __init__(self, data):
+
+class Event:
+    def __init__(self, data: Dict[Any, Any]) -> None:
         self.data = data
 
     def get_event(self):
@@ -22,23 +23,7 @@ class Event:
         return False
 
     def is_response_event(self):
-        if self.get_reponse_topic is None:
+        if self.get_reponse_topic() is None:
             return False
 
         return True
-
-
-class IncomingEvent(Event):
-    source = None
-
-    def __init__(self, *args, source=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.source = source
-
-
-class OutgoingEvent(Event):
-    destination = None
-
-    def __init__(self, *args, destination=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.destination = destination

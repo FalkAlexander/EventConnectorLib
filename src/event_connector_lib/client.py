@@ -123,14 +123,10 @@ class Client:
                 logging.error("Error Forwarding Event: %s", event.get_topic())
 
     def _put_incoming_event_into_queue(self, event: Event) -> None:
-        if not isinstance(event, Event):
-            return
         self.__incoming_events_queue.put(event)
         logging.info("Put Incoming Event in Queue: %s", event.get_topic())
 
     def _put_outgoing_event_into_queue(self, event: Event) -> None:
-        if not isinstance(event, Event):
-            return
         self.__outgoing_events_queue.put(event)
         logging.info("Put Event in Outgoing Queue: %s", event.get_topic())
 
