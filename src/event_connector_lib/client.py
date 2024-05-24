@@ -106,7 +106,7 @@ class Client:
                 #     )
 
                 requests.post(
-                    url=f"http://{self.host}:{self.port}/event",
+                    url=f"http://{self.__broker_host}:{self.__broker_port}/event",
                     json=event.data,
                     timeout=60,
                 )
