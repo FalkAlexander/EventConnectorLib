@@ -6,7 +6,7 @@ import enum
 import traceback
 import requests
 import json
-from typing import Callable
+from typing import Any, Callable
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
@@ -122,21 +122,26 @@ class Client:
                 traceback.print_exc()
                 logging.error("Error Forwarding Event: %s", event.get_topic())
 
-    def __put_incoming_event_into_queue(self, event) -> None:
+    def _put_incoming_event_into_queue(self, event: Event) -> None:
         if not isinstance(event, Event):
             return
         self.__incoming_events_queue.put(event)
         logging.info("Put Incoming Event in Queue: %s", event.get_topic())
 
-    def __put_outgoing_event_into_queue(self, event: Event) -> None:
+    def _put_outgoing_event_into_queue(self, event: Event) -> None:
         if not isinstance(event, Event):
             return
         self.__outgoing_events_queue.put(event)
         logging.info("Put Event in Outgoing Queue: %s", event.get_topic())
 
     def __start_listening(self, host: str, port: int) -> None:
-        httpd = HTTPServer((host, port), HTTPRequestHandler)
+        httpd = HTTPServer((host, port), self.__create_http_request_handler)
         httpd.serve_forever()
+
+    def __create_http_request_handler(
+        self, *args: Any, **kwargs: Any
+    ) -> "HTTPRequestHandler":
+        return HTTPRequestHandler(self, *args, **kwargs)
 
     #
     # Public API
@@ -168,10 +173,10 @@ class Client:
         }
 
         event = Event(data=event_data)
-        self.__put_outgoing_event_into_queue(event)
+        self._put_outgoing_event_into_queue(event)
 
     def send_event(self, event: Event) -> None:
-        self.__put_outgoing_event_into_queue(event)
+        self._put_outgoing_event_into_queue(event)
 
     def subscribe_topic(self, topic: str) -> None:
         pass
@@ -197,6 +202,10 @@ class Client:
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
+    def __init__(self, client_instance: Client, *args: Any, **kwargs: Any):
+        self.__client_instance = client_instance
+        super().__init__(*args, **kwargs)
+
     def do_POST(self):
         parsed_path = urlparse(self.path)
         if parsed_path.path == "/event":
@@ -226,7 +235,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 return
 
             # Put the incoming event into the queue
-            # self.server.put_incoming_event_into_queue(Event(data=json_data))
+            self.__client_instance._put_incoming_event_into_queue(
+                event=Event(data=json_data)
+            )
 
             self.send_response(200)
             self.end_headers()
