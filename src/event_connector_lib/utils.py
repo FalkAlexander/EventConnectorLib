@@ -49,3 +49,20 @@ class Event:
             return False
 
         return True
+
+    def __str__(self):
+        event = self.get_event()
+        payload = self.get_payload()
+        topic = self.get_topic()
+        response_topic = self.get_reponse_topic()
+        response_requested = self.is_response_requested()
+
+        return (
+            f"Event({{\n"
+            f"  'event': {event},\n"
+            f"  'payload': {payload},\n"
+            f"  'topic': {topic},\n"
+            f"  'respond_to': {response_topic},\n"
+            f"  'response_requested': {response_requested}\n"
+            f"}})"
+        )
