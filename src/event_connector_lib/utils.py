@@ -2,6 +2,28 @@ from typing import Any, Dict
 
 
 class Event:
+    """
+    The Event class encapsulates event-related data and provides various methods
+    to access specific elements of the event.
+
+    Attributes:
+        data (Dict[Any, Any]): A dictionary containing event data.
+
+    Methods:
+        get_event():
+            Retrieves the 'event' field from the event data.
+        get_payload():
+            Retrieves the 'payload' field from the event data.
+        get_topic():
+            Retrieves the 'topic' field from the 'event' data.
+        get_reponse_topic():
+            Retrieves the 'respond_to' field from the 'event' data.
+        is_response_requested():
+            Checks if a response is requested for the event.
+        is_response_event():
+            Checks if the event is a response event.
+    """
+
     def __init__(self, data: Dict[Any, Any]) -> None:
         self.data = data
 

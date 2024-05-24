@@ -144,9 +144,37 @@ class Client:
     #
 
     def set_event_handler(self, receiver_func: Callable[[Event], None]) -> None:
+        """
+        Registers a function to handle incoming events.
+
+        Args:
+            receiver_func (Callable[[Event], None]): A function that takes an Event
+                                                     as its parameter and handles it.
+
+        Example:
+            def my_event_handler(event: Event):
+                print(f"Received event with topic: {event.get_topic()}")
+
+            client.set_event_handler(my_event_handler)
+        """
         self.__receiver_func = receiver_func
 
     def connect_broker(self, host: str, port: int) -> None:
+        """
+        Connects to a broker using the provided host and port, then sends a registration event.
+
+        This method sets the broker's host and port for the client instance and creates an event data structure
+        that includes registration details such as the name, description, version, type, and event handler URL
+        for the module. It then encapsulates this data into an `Event` object and puts it into the outgoing
+        events queue to be processed and sent to the broker.
+
+        Args:
+            host (str): The hostname or IP address of the broker.
+            port (int): The port number on which the broker is listening.
+
+        Example:
+            client.connect_broker(host='127.0.0.1', port=10000)
+        """
         self.__broker_host = host
         self.__broker_port = port
 
@@ -172,12 +200,44 @@ class Client:
         self._put_outgoing_event_into_queue(event)
 
     def send_event(self, event: Event) -> None:
+        """
+        Sends an event by placing it into the outgoing events queue.
+
+        This method takes an `Event` object and adds it to the queue of outgoing events to be processed
+        and sent to the broker. By calling this method, an event is effectively
+        scheduled for delivery.
+
+        Args:
+            event (Event): The event object that contains the necessary data to be sent out.
+
+        Example:
+            event_data = {
+                'event': {
+                    'topic': 'sample/topic',
+                    'respond_to': 'response/topic',
+                    'response_requested': False
+                },
+                'payload': {
+                    'key': 'value'
+                }
+            }
+            event = Event(data=event_data)
+            client.send_event(event)
+        """
         self._put_outgoing_event_into_queue(event)
 
     def subscribe_topic(self, topic: str) -> None:
         pass
 
     def loop_forever(self):
+        """
+        This method blocks the current thread and waits indefinitely.
+
+        It is useful for the case where you only want to run the client loop in your program and process incoming events.
+
+        Raises:
+            RuntimeError: If the HTTP server thread has not been started.
+        """
         if self.__http_server_thread is None:
             raise RuntimeError("HTTP server thread has not been started.")
 
