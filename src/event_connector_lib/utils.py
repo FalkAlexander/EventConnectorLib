@@ -28,23 +28,73 @@ class Event:
         self.data = data
 
     def get_event(self):
+        """
+        Retrieves the 'event' field from the event data, it the raw metadata
+        like the event topic.
+
+        Returns:
+            Any: The value of the 'event' field from the event data dictionary, or
+            None if the 'event' key is not present.
+        """
         return self.data.get("event", None)
 
     def get_payload(self):
+        """
+        Retrieves the 'topic' field from the 'event' data.
+
+        Returns:
+            Any: The value of the 'topic' field from the 'event' dictionary, or
+            None if the 'event' key or 'topic' key is not present.
+        """
         return self.data.get("payload", None)
 
     def get_topic(self):
+        """
+        Retrieves the 'topic' field from the 'event' data.
+
+        Returns:
+            Any: The value of the 'topic' field from the 'event' dictionary, or
+            None if the 'event' key or 'topic' key is not present.
+        """
         return self.data.get("event", None).get("topic", None)
 
     def get_reponse_topic(self):
+        """
+        Retrieves the 'respond_to' field from the 'event' data. The reponse topic is
+        meant for follow up events, which the receiver sends to the original sender.
+
+        Returns:
+            Any: The value of the 'respond_to' field from the 'event' dictionary, or
+            None if the 'event' key or 'respond_to' key is not present.
+        """
         return self.data.get("event", None).get("respond_to", None)
 
     def is_response_requested(self):
+        """
+        Checks if a response is requested for the event.
+
+        This method looks for the 'response_requested' field within the 'event'
+        dictionary in the event data. If this field is set to True, it indicates
+        that a response is requested.
+        Returns:
+            bool: True if a response is requested, False otherwise.
+        """
         if self.data.get("event", None).get("response_requested", None) is True:
             return True
         return False
 
     def is_response_event(self):
+        """
+        Checks if the event is a response event.
+
+        This method determines if the event contains a 'respond_to' field
+        within the 'event' dictionary, which indicates that the event is
+        a response to a previous event.
+        Returns:
+            bool: True if the 'respond_to' key is present within the 'event'
+            dictionary, indicating that the event is a response event;
+            False otherwise.
+        """
         if self.get_reponse_topic() is None:
             return False
 
