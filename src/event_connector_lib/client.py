@@ -52,6 +52,7 @@ class Client:
     __outgoing_events_queue: queue.Queue[Event] = queue.Queue()
     __response_registry = {}
     __receiver_func = None
+    __http_server_thread = None
 
     def __init__(
         self,
@@ -72,9 +73,10 @@ class Client:
         threading.Thread(target=self.__process_incoming_events, daemon=True).start()
         threading.Thread(target=self.__process_outgoing_events, daemon=True).start()
 
-        threading.Thread(
+        self.__http_server_thread = threading.Thread(
             target=self.__start_listening, args=(host, port), daemon=True
-        ).start()
+        )
+        self.__http_server_thread.start()
 
     #
     # Event Queue Management
@@ -173,6 +175,15 @@ class Client:
 
     def subscribe_topic(self, topic: str) -> None:
         pass
+
+    def loop_forever(self):
+        if self.__http_server_thread is None:
+            raise RuntimeError("HTTP server thread has not been started.")
+
+        try:
+            self.__http_server_thread.join()
+        except KeyboardInterrupt:
+            logging.info("Shutting down the client.")
 
     #
     # Util
