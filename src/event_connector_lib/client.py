@@ -190,7 +190,7 @@ class Client:
                     "description": f"{self.description}",
                     "version": f"{self.version}",
                     "type": f"{self.module_type}",
-                    "eventHandler": f"http://{self.host}:{self.port}",
+                    "eventHandler": f"http://{self.host}:{self.port}/event",
                     "topics": ["*"],
                 }
             },
