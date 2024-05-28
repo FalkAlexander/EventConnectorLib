@@ -6,12 +6,16 @@ import enum
 import traceback
 import requests
 import json
-from typing import Any, Callable
+from typing import Any, Callable, Dict, Optional
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 
 from event_connector_lib.utils import Event
+
+
+class ResponseCallbackError(Exception):
+    """Raised when a response callback is provided but the event does not request a response."""
 
 
 class ModuleType(enum.Enum):
@@ -50,7 +54,7 @@ class Client:
 
     __incoming_events_queue: queue.Queue[Event] = queue.Queue()
     __outgoing_events_queue: queue.Queue[Event] = queue.Queue()
-    __response_registry = {}
+    __registered_response_callbacks: Dict[str, queue.Queue[Event]] = {}
     __receiver_func = None
     __http_server_thread = None
 
@@ -139,6 +143,36 @@ class Client:
     ) -> "HTTPRequestHandler":
         return HTTPRequestHandler(self, *args, **kwargs)
 
+    def __await_event(
+        self,
+        topic: str,
+        response_callback: Callable[[Event, Any], None],
+        *args: Any,
+        **kwargs: Any,
+    ):
+        if topic not in self.__registered_response_callbacks:
+            self.__registered_response_callbacks[topic] = queue.Queue()
+
+        response_queue = self.__registered_response_callbacks[topic]
+        try:
+            response_event = response_queue.get(timeout=30)
+        except queue.Empty:
+            logging.error(
+                "Canceled awaiting response event with topic %s. Reason: Timeout reached.",
+                topic,
+            )
+            return None
+        except queue.Full:
+            logging.error(
+                "Canceled awaiting response event with topic %s. Reason: Queue full.",
+                topic,
+            )
+            return None
+
+        del self.__registered_response_callbacks[topic]
+
+        response_callback(response_event, *args, **kwargs)
+
     #
     # Public API
     #
@@ -199,7 +233,13 @@ class Client:
         event = Event(data=event_data)
         self._put_outgoing_event_into_queue(event)
 
-    def send_event(self, event: Event) -> None:
+    def send_event(
+        self,
+        event: Event,
+        response_callback: Optional[Callable[[Event, Any], None]] = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         """
         Sends an event by placing it into the outgoing events queue.
 
@@ -225,6 +265,33 @@ class Client:
             client.send_event(event)
         """
         self._put_outgoing_event_into_queue(event)
+
+        if response_callback is None:
+            return
+
+        if not event.is_response_requested():
+            logging.warning(
+                "Response_callback provided, but the event does not request a response."
+            )
+            raise ResponseCallbackError(
+                "response_callback provided, but the event does not request a response."
+            )
+        if not event.get_reponse_topic():
+            logging.warning(
+                "Response_callback provided, but the event does not specify a response topic."
+            )
+            raise ResponseCallbackError(
+                "response_callback provided, but the event does not specify a response topic."
+            )
+        if not callable(response_callback):
+            raise TypeError("response_callback should be a callable function or None")
+
+        self.__await_event(
+            topic=event.get_reponse_topic(),
+            response_callback=response_callback,
+            *args,
+            **kwargs,
+        )
 
     def subscribe_topic(self, topic: str) -> None:
         pass
