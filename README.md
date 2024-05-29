@@ -15,3 +15,7 @@ pip install git+https://git.waldwaechter.de/5G-Waldwaechter/EventConnectorLib
 ```sh
 pip install --upgrade --force-reinstall git+https://git.waldwaechter.de/5G-Waldwaechter/EventConnectorLib
 ```
+
+## Documentation
+
+For detailed usage and API documentation, please visit [EventConnectorLib Documentation](https://eventconnectorlib.readthedocs.io/en/latest/).
