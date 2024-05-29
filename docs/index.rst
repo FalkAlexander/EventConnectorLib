@@ -28,6 +28,7 @@ To get started with EventConnectorLib, follow the installation instructions and 
    installation
    usage
    api_reference
+   modules
 
 Additional Resources
 --------------------
