@@ -236,7 +236,7 @@ class Client:
     def send_event(
         self,
         event: Event,
-        response_callback: Optional[Callable[[Event, Any], None]] = None,
+        response_callback: Optional[Callable[..., None]] = None,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -249,6 +249,17 @@ class Client:
 
         Args:
             event (Event): The event object that contains the necessary data to be sent out.
+            response_callback (Optional[Callable[..., None]]): A callback function that is invoked
+            when a response event has been received. This callback function must accept
+            the `Event` object as its first parameter, followed by additional arbitrary arguments.
+            *args (Any): Additional positional arguments to pass to the callback function.
+            **kwargs (Any): Additional keyword arguments to pass to the callback function.
+
+        The `response_callback` can be used to handle the response event as it is received.
+        This mechanism is similar to a signal/slot or callback system, allowing you to define a
+        function or method that will handle the response. The callback receives the response
+        event and any additional data supplied, enabling you to perform necessary follow-up actions
+        in response to the event.
 
         Example:
             event_data = {
@@ -262,7 +273,17 @@ class Client:
                 }
             }
             event = Event(data=event_data)
-            client.send_event(event)
+
+            def handle_response(response_event: Event, extra_data1, extra_data2):
+                print("Response received:", response_event)
+                print("Additional data:", extra_data1, extra_data2)
+
+            client.send_event(
+                event,
+                response_callback=handle_response,
+                extra_arg1="extra1",
+                extra_arg2="extra2"
+            )
         """
         self._put_outgoing_event_into_queue(event)
 
