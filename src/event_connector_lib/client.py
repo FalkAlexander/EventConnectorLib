@@ -97,6 +97,13 @@ class Client:
                 )
                 continue
 
+            if event.get_topic() in self.__registered_response_callbacks:
+                logging.debug(
+                    "Received an event with a topic that has been registered for a response callback."
+                )
+                self.__registered_response_callbacks[event.get_topic()].put(event)
+                continue
+
             self.__receiver_func(event)
 
     def __process_outgoing_events(self) -> None:
