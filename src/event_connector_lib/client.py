@@ -321,23 +321,39 @@ class Client:
             **kwargs,
         )
 
-    def subscribe_topic(self, topic: str | list[str]) -> None:
+    def subscribe_topic(self, topic: str) -> None:
         """
-        Subscribes to a given topic or list of topics.
+        Subscribes to a single topic.
 
-        This method constructs an event data structure that includes topic subscription details
-        such as the topics to subscribe to and the event handler URL. It then encapsulates this data
-        into an `Event` object and sends it out using the `send_event` method.
+        This method allows the client to subscribe to a specific topic, enabling it to
+        receive and handle events published to that topic on the broker. By subscribing
+        to a topic, the client can become a listener for messages related to the topic of interest.
 
         Args:
-            topic (str | list[str]): The topic or list of topics to subscribe to. If a single topic
-                                     is provided as a string, it will be converted into a list with a
-                                     single element.
+            topic (str): The topic string to subscribe to.
 
         Example:
-            client.subscribe_topic("/example/topic")
-            client.subscribe_topic(["/example/topic1", "/example/topic2"])
+            client.subscribe_topic("/sample/topic")
         """
+        self._subscribe_topics([topic])
+
+    def subscribe_topics(self, topics: list[str]) -> None:
+        """
+        Subscribes to multiple topics.
+
+        This method allows the client to subscribe to a list of topics, enabling it to receive and handle
+        events published to these topics on the broker. By subscribing to multiple topics, the client
+        can become a listener for messages related to several topics of interest in a single call.
+
+        Args:
+            topics (list[str]): A list of topic strings to subscribe to.
+
+        Example:
+            client.subscribe_topics(["/sample/topic1", "/sample/topic2"])
+        """
+        self._subscribe_topics(topics)
+
+    def _subscribe_topics(self, topics: list[str]) -> None:
         topic_subscription_event_data = {
             "event": {
                 "topic": "/zkms/register/topic",
@@ -345,7 +361,7 @@ class Client:
             },
             "payload": {
                 "eventHandler": f"http://{self.host}:{self.port}/event",
-                "topics": topic if isinstance(topic, list) else [topic],
+                "topics": topics,
             },
         }
         self.send_event(event=Event(data=topic_subscription_event_data))
