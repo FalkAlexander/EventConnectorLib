@@ -141,6 +141,32 @@ class Client:
         self.__outgoing_events_queue.put(event)
         logging.info("Put Event in Outgoing Queue: %s", event.get_topic())
 
+    def _subscribe_topics(self, topics: list[str]) -> None:
+        topic_subscription_event_data = {
+            "event": {
+                "topic": "/zkms/register/topic",
+                "response_requested": False,
+            },
+            "payload": {
+                "eventHandler": f"http://{self.host}:{self.port}/event",
+                "topics": topics,
+            },
+        }
+        self.send_event(event=Event(data=topic_subscription_event_data))
+
+    def _unsubscribe_topics(self, topics: list[str]) -> None:
+        topic_unsubscription_event_data = {
+            "event": {
+                "topic": "/zkms/deregister/topic",
+                "response_requested": False,
+            },
+            "payload": {
+                "eventHandler": f"http://{self.host}:{self.port}/event",
+                "topics": topics,
+            },
+        }
+        self.send_event(event=Event(data=topic_unsubscription_event_data))
+
     def __start_listening(self, host: str, port: int) -> None:
         httpd = HTTPServer((host, port), self.__create_http_request_handler)
         httpd.serve_forever()
@@ -353,18 +379,37 @@ class Client:
         """
         self._subscribe_topics(topics)
 
-    def _subscribe_topics(self, topics: list[str]) -> None:
-        topic_subscription_event_data = {
-            "event": {
-                "topic": "/zkms/register/topic",
-                "response_requested": False,
-            },
-            "payload": {
-                "eventHandler": f"http://{self.host}:{self.port}/event",
-                "topics": topics,
-            },
-        }
-        self.send_event(event=Event(data=topic_subscription_event_data))
+    def unsubscribe_topic(self, topic: str) -> None:
+        """
+        Unsubscribes from a single topic.
+
+        This method allows the client to unsubscribe from a specific topic, stopping it from
+        receiving and handling events published to that topic on the broker. By unsubscribing
+        from a topic, the client will no longer listen to messages related to the specified topic.
+
+        Args:
+            topic (str): The topic string to unsubscribe from.
+
+        Example:
+            client.unsubscribe_topic("/sample/topic")
+        """
+        self._unsubscribe_topics([topic])
+
+    def unsubscribe_topics(self, topics: list[str]) -> None:
+        """
+        Unsubscribes from multiple topics.
+
+        This method allows the client to unsubscribe from a list of topics, stopping it from
+        receiving and handling events published to those topics on the broker. By unsubscribing
+        from multiple topics, the client will no longer listen to messages related to the specified topics.
+
+        Args:
+            topics (list[str]): A list of topic strings to unsubscribe from.
+
+        Example:
+            client.unsubscribe_topics(["/sample/topic1", "/sample/topic2"])
+        """
+        self._unsubscribe_topics(topics)
 
     def loop_forever(self):
         """
