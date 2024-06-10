@@ -57,6 +57,7 @@ class Client:
     __registered_response_callbacks: Dict[str, queue.Queue[Event]] = {}
     __receiver_func = None
     __http_server_thread = None
+    __receiver_func_queue: queue.Queue[Event] = queue.Queue()
 
     def __init__(
         self,
@@ -104,7 +105,7 @@ class Client:
                 self.__registered_response_callbacks[event.get_topic()].put(event)
                 continue
 
-            self.__receiver_func(event)
+            self.__receiver_func_queue.put(event)
 
     def __process_outgoing_events(self) -> None:
         while True:
@@ -285,6 +286,7 @@ class Client:
             response_callback (Optional[Callable[..., None]]): A callback function that is invoked
             when a response event has been received. This callback function must accept
             the `Event` object as its first parameter, followed by additional arbitrary arguments.
+            The response_callback is being called in the same thread from which send_event was called.
             *args (Any): Additional positional arguments to pass to the callback function.
             **kwargs (Any): Additional keyword arguments to pass to the callback function.
 
@@ -411,20 +413,31 @@ class Client:
         """
         self._unsubscribe_topics(topics)
 
-    def loop_forever(self):
+    def listen_forever(self):
         """
-        This method blocks the current thread and waits indefinitely.
+        Starts a blocking loop to continuously listen and process incoming events.
 
-        It is useful for the case where you only want to run the client loop in your program and process incoming events.
+        This method initiates an infinite loop that waits for incoming events from the event queue. When an event
+        arrives, it is passed to the registered receiver function for further processing. If no receiver function is
+        registered at the time of receiving an event, a warning message will be logged and the event will be discarded.
 
-        Raises:
-            RuntimeError: If the HTTP server thread has not been started.
+        The method keeps running indefinitely until interrupted by a KeyboardInterrupt (e.g., Ctrl+C). Upon receiving
+        such an interrupt, it logs an information message indicating that the client is shutting down.
+
+        Note: This method should be executed in its own thread or process, as it runs indefinitely and can block other
+              parts of the program from executing if not properly managed.
         """
-        if self.__http_server_thread is None:
-            raise RuntimeError("HTTP server thread has not been started.")
-
         try:
-            self.__http_server_thread.join()
+            while True:
+                if self.__http_server_thread is None:
+                    raise RuntimeError("HTTP server thread has not been started.")
+                event = self.__receiver_func_queue.get()
+                if self.__receiver_func is None:
+                    logging.warn(
+                        "Received an event, but no event handler was registered. Discarding event…"
+                    )
+                    continue
+                self.__receiver_func(event)
         except KeyboardInterrupt:
             logging.info("Shutting down the client.")
 
