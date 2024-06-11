@@ -116,3 +116,26 @@ class Event:
             f"  'response_requested': {response_requested}\n"
             f"}})"
         )
+
+
+class BrokerEvent(Event):
+    """
+    The BrokerEvent class represents a specialized type of Event that originates from
+    a broker and has a static destination. This allows the broker to send events to
+    specific locations, such as modules, for its internal implementation use.
+
+    Attributes:
+        destination (str): The static destination of the event, indicating where
+            it should be sent or handled within the system.
+
+    Methods:
+        get_destination():
+            Retrieves the destination attribute of the BrokerEvent instance.
+    """
+
+    def __init__(self, destination: str, **kwargs: Any):
+        self.destination = destination
+        super(BrokerEvent, self).__init__(**kwargs)
+
+    def get_destination(self):
+        return self.destination

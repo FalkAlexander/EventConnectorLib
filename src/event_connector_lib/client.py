@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, Optional
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 
-from event_connector_lib.utils import Event
+from event_connector_lib.utils import BrokerEvent, Event
 
 
 class ResponseCallbackError(Exception):
@@ -117,8 +117,15 @@ class Client:
                 #         topic=event.get_topic(),
                 #     )
 
+                if isinstance(event, BrokerEvent):
+                    destination_url = event.get_destination()
+                else:
+                    destination_url = (
+                        f"http://{self.__broker_host}:{self.__broker_port}/event"
+                    )
+
                 requests.post(
-                    url=f"http://{self.__broker_host}:{self.__broker_port}/event",
+                    url=destination_url,
                     json=event.data,
                     timeout=60,
                 )
@@ -174,8 +181,8 @@ class Client:
 
     def __create_http_request_handler(
         self, *args: Any, **kwargs: Any
-    ) -> "HTTPRequestHandler":
-        return HTTPRequestHandler(self, *args, **kwargs)
+    ) -> "_HTTPRequestHandler":
+        return _HTTPRequestHandler(self, *args, **kwargs)
 
     def __await_event(
         self,
@@ -452,7 +459,7 @@ class Client:
         )
 
 
-class HTTPRequestHandler(BaseHTTPRequestHandler):
+class _HTTPRequestHandler(BaseHTTPRequestHandler):
     def __init__(self, client_instance: Client, *args: Any, **kwargs: Any):
         self.__client_instance = client_instance
         super().__init__(*args, **kwargs)
