@@ -343,7 +343,7 @@ class Client:
             **kwargs,
         )
 
-    def await_response_on_send_event(self, event: Event, timeout: int = 60):
+    def send_event_and_await_response(self, event: Event, timeout: int = 60):
         """
         Sends an event and waits for a response with a specified timeout.
 
