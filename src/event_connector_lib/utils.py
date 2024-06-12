@@ -126,7 +126,7 @@ class BrokerEvent(Event):
 
     Attributes:
         destination (str): The static destination of the event, indicating where
-            it should be sent or handled within the system.
+            it should be sent or handled within the system. This is most likely a HTTP endpoint.
 
     Methods:
         get_destination():
