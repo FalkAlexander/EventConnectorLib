@@ -370,3 +370,14 @@ class Module:
         :type topics: list[str]
         """
         self.__topics.difference_update(topics)
+
+    def __str__(self):
+        return (
+            f"Module(\n"
+            f"\tname={self.__name},\n"
+            f"\tdescription={self.__description},\n"
+            f"\tversion={self.__version},\n"
+            f"\ttype={self.__type.value},\n"
+            f"\tevent_handler={self.__event_handler},\n"
+            f"\ttopics={list(self.__topics)}\n)"
+        )
