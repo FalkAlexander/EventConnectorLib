@@ -156,3 +156,167 @@ class ModuleType(enum.Enum):
     AI = 2
 
 
+class Module:
+    """
+    Represents an abstract concept of a module within the ZKMS System. This class is used to describe and manage
+    modules in a structured manner, specifying their name, description, version, type, event handler, and topics they are subscribed to.
+    Please note that this class does not actually implement a module; it's a blueprint for one.
+
+    Examples:
+        Creating a support module that handles events related to 'user_support' and sends them to 'http://127.0.0.1:56789/events':
+
+        >>> support_module = Module(name="Support", description="Handles support events", version="1.0.0", type=ModuleType.SUPPORT, event_handler="http://127.0.0.1:56789/events", topics=["/support"])
+        >>> print(support_module.name)
+        Support
+
+    Attributes:
+        name (str): The name of the module. This attribute should not be changed once set.
+        description (str): A brief description of the module's purpose and functionality. This attribute should not be changed once set.
+        version (str): The current version of the module, following semantic versioning standards. This attribute should not be changed once set.
+        type (ModuleType): The type of the module within the ZKMS System. This attribute should not be changed once set.
+        event_handler (str): The URL to which events will be sent by this module. This is typically an HTTP endpoint. This attribute should not be changed once set.
+        topics (list[str]): A list of topics that the module is subscribed to, and for which it will handle events. Topics can be added or removed dynamically using the provided methods.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        version: str,
+        type: ModuleType,
+        event_handler: str,
+        topics: list[str],
+    ):
+        """
+        Initializes a new instance of the module.
+
+        :param name: The name of the module.
+        :type name: str
+        :param description: A brief description of the module's purpose and functionality.
+        :type description: str
+        :param version: The current version of the module, following semantic versioning standards.
+        :type version: str
+        :param type: The type of the module within the ZKMS System.
+        :type type: ModuleType
+        :param event_handler: The URL to which events will be sent by this module (typically an HTTP endpoint).
+        :type event_handler: str
+        :param topics: A list of topics that the module is subscribed to and for which it will handle events.
+        :type topics: list[str]
+
+        These attributes (except of topics) are properties and not intended for being changed directly after initialization.
+
+        Example code snippet:
+
+        >>> support_module = Module(
+                name='Support',
+                description='A module that provides support functionality.',
+                version='1.0.0',
+                type=ModuleType.SUPPORT,
+                event_handler='hhttp://127.0.0.1:56789/events',
+                topics=['/support']
+            )
+        >>> print(support_module.name)
+        Support
+        """
+        self.__name = name
+        self.__description = description
+        self.__version = version
+        self.__type = type
+        self.__event_handler = event_handler
+        self.__topics = set(topics)
+
+    @property
+    def name(self) -> str:
+        """
+        Returns the name of the module. This property should not be changed after initialization.
+
+        :return: The name of the module as a string.
+        """
+        return self.__name
+
+    @property
+    def description(self) -> str:
+        """
+        Returns the description of the module, which provides an overview or explanation of its functionality.
+        This property should not be changed after initialization.
+
+        :return: The description of the module as a string.
+        """
+        return self.__description
+
+    @property
+    def version(self) -> str:
+        """
+        Returns the current version of the module.
+        This property should not be changed after initialization.
+
+        :return: The version number of the module as a string.
+        """
+        return self.__version
+
+    @property
+    def type(self) -> ModuleType:
+        """
+        Returns the type of the module within the ZKMS System.
+        This property should not be changed after initialization.
+
+        :return: The module type as an instance of the ModuleType enumeration class.
+        """
+        return self.__type
+
+    @property
+    def event_handler(self) -> str:
+        """
+        Returns the URL to which events will be sent intended for this module.
+        This property should not be changed after initialization.
+
+        :return: The event handler's URL as a string.
+        """
+        return self.__event_handler
+
+    @property
+    def topics(self) -> list[str]:
+        """
+        Returns a copy of the current list of topics that the module is subscribed to and handles events for.
+        The topics are returned as a list of strings. Note that modifying this list will not update the module's subscription; use add_topic() or remove_topic() methods for that.
+
+        :return: A copy of the current topic list as a list of strings.
+        """
+        return list(self.__topics)
+
+    def add_topic(self, topic: str):
+        """
+        Adds a new topic to the module's subscription list. If the topic already exists in the subscription list, this method does nothing.
+
+        :param topic: The topic to be added as a string.
+        :type topic: str
+        """
+        self.__topics.add(topic)
+
+    def add_topics(self, topics: list[str]):
+        """
+        Adds multiple new topics to the module's subscription list. If a topic already exists in the subscription list, it will not be added again.
+
+        :param topics: A list of topics to be added as strings.
+        :type topics: list[str]
+        """
+        self.__topics.update(topics)
+
+    def remove_topic(self, topic: str):
+        """
+        Removes a specific topic from the module's subscription list. If the topic does not exist in the subscription list, this method will raise a KeyError.
+
+        :param topic: The topic to be removed as a string.
+        :type topic: str
+        :raises KeyError: When attempting to remove a non-existent topic.
+        """
+        self.__topics.remove(topic)
+
+    def remove_topics(self, topics: list[str]):
+        """
+        Removes multiple specific topics from the module's subscription list. If a topic does not exist in the subscription list, it will be ignored and no error will be raised.
+
+        :param topics: A list of topics to be removed as strings.
+        :type topics: list[str]
+        """
+        self.__topics.difference_update(topics)
