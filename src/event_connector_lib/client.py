@@ -18,6 +18,10 @@ class ResponseCallbackError(Exception):
     """Raised when a response callback is provided but the event does not request a response."""
 
 
+class AwaitEventResponseTimeout(TimeoutError):
+    """Raised when an awaited event response is not received within a certain timeout."""
+
+
 class ModuleType(enum.Enum):
     """
     Enumeration for different types of ZKMS Modules.
@@ -349,12 +353,50 @@ class Client:
         if not callable(response_callback):
             raise TypeError("response_callback should be a callable function or None")
 
+        # TODO: Execute __await_event in dedicated thread in order to not block send_event from here on
         self.__await_event(
             topic=event.get_reponse_topic(),
             response_callback=response_callback,
             *args,
             **kwargs,
         )
+
+    def await_response_on_send_event(self, event: Event, timeout: int = 60):
+        """
+        Sends an event and waits for a response with a specified timeout.
+
+        This method sends the given event to the broker and then waits up to the specified number of seconds for a response. If no response is received within the timeout period, it raises an AwaitEventResponseTimeout exception.
+
+        Args:
+            event (Event): The event to send to the broker.
+            timeout (int, optional): The maximum number of seconds to wait for a response before raising a timeout exception. Defaults to 60.
+
+        Returns:
+            Event: The response event received from the broker within the specified timeout period. If no response is received within the timeout period, an AwaitEventResponseTimeout exception will be raised instead.
+
+        Raises:
+            AwaitEventResponseTimeout: If a response is not received within the specified timeout period.
+
+        Example:
+            response = client.await_response_on_send_event(event=my_event, timeout=30)
+        """
+        response_received = threading.Event()
+        response_event = None
+
+        def handle_response(event: Event):
+            nonlocal response_event
+            response_event = event
+            response_received.set()
+
+        self.send_event(event=event, response_callback=handle_response)
+        response_received.wait(timeout=timeout)
+
+        if not response_received.is_set():
+            raise AwaitEventResponseTimeout(
+                "Timed out waiting for the awaited response event"
+            )
+
+        return response_event
 
     def subscribe_topic(self, topic: str) -> None:
         """
