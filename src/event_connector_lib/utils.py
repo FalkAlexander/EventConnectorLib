@@ -135,11 +135,13 @@ class BrokerEvent(Event):
     """
 
     def __init__(self, destination: str, **kwargs: Any):
-        self.destination = destination
+        self.__destination = destination
         super(BrokerEvent, self).__init__(**kwargs)
 
-    def get_destination(self):
-        return self.destination
+    @property
+    def destination(self) -> str:
+        return self.__destination
+
 
 class ModuleType(enum.Enum):
     """
