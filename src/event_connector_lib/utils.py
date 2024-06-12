@@ -5,72 +5,110 @@ from typing import Any, Dict
 class Event:
     """
     The Event class encapsulates event-related data and provides various methods
-    to access specific elements of the event.
+    to access specific elements of the event. It serves as the data structure for events in the zkms system.
+
+    This class provides a consistent interface for working with events, allowing
+    easy access to their components such as header, payload and topics.
 
     Attributes:
         data (Dict[Any, Any]): A dictionary containing event data.
 
     Methods:
-        get_event():
-            Retrieves the 'event' field from the event data.
-        get_payload():
+        header():
+            Retrieves the 'event' field from the event data, which contains raw metadata like the event topic.
+        payload():
             Retrieves the 'payload' field from the event data.
-        get_topic():
+        topic():
             Retrieves the 'topic' field from the 'event' data.
-        get_reponse_topic():
+        reponse_topic():
             Retrieves the 'respond_to' field from the 'event' data.
         is_response_requested():
             Checks if a response is requested for the event.
         is_response_event():
             Checks if the event is a response event.
+        __str__():
+            Returns a string representation of the Event object, useful for debugging and logging purposes.
+
+    Example:
+        Here's an example of how to create an instance of the Event class and access its properties:
+
+        >>> data = {
+                "event": {"topic": "example_topic", "respond_to": "response_topic"},
+                "payload": {"key1": "value1"}
+            }
+        >>> event = Event(data)
+        >>> print(event.header())
+        {'topic': 'example_topic', 'respond_to': 'response_topic'}
     """
 
     def __init__(self, data: Dict[Any, Any]) -> None:
-        self.data = data
-
-    def get_event(self):
         """
-        Retrieves the 'event' field from the event data, it the raw metadata
-        like the event topic.
+        Initializes a new instance of the Event class.
+
+        This constructor creates an Event object and sets its internal data attribute based on the provided dictionary. It performs basic validation to ensure that the required 'event' and 'payload' fields are present in the input data. If these fields are missing, it raises a ValueError with an appropriate error message.
+
+        Parameters:
+            data (Dict[Any, Any]): A dictionary containing event data, which must include at least an 'event' field and a 'payload' field.
+
+        Raises:
+            ValueError: If the input data is missing the required 'event' or 'payload' fields.
+
+        Example Usage:
+            >>> data = {
+                    "event": {"topic": "example_topic", "respond_to": "response_topic"},
+                    "payload": {"key1": "value1"}
+                }
+            >>> event = Event(data)
+        """
+        if "event" not in data:
+            raise ValueError("Missing required 'event' field in event data")
+        if "payload" not in data:
+            raise ValueError("Missing required 'payload' field in event data")
+        if "topic" not in data["event"]:
+            raise ValueError("Missing required 'topic' field in event header")
+        self.__data = data
+
+    @property
+    def header(self) -> Dict[Any, Any]:
+        """
+        Retrieves the header from the event data, which contains raw metadata like the event topic and response request status.
 
         Returns:
-            Any: The value of the 'event' field from the event data dictionary, or
-            None if the 'event' key is not present.
+            Dict[Any, Any]: A copy of the header of the event.
         """
-        return self.data.get("event", None)
+        return self.__data["event"]
 
-    def get_payload(self):
+    @property
+    def payload(self) -> Dict[Any, Any]:
         """
-        Retrieves the 'topic' field from the 'event' data.
-
-        Returns:
-            Any: The value of the 'topic' field from the 'event' dictionary, or
-            None if the 'event' key or 'topic' key is not present.
-        """
-        return self.data.get("payload", None)
-
-    def get_topic(self):
-        """
-        Retrieves the 'topic' field from the 'event' data.
+        Retrieves the 'payload' field from the Event data. The payload contains a custom key-value store of event data.
 
         Returns:
-            Any: The value of the 'topic' field from the 'event' dictionary, or
-            None if the 'event' key or 'topic' key is not present.
-        """
-        return self.data.get("event", None).get("topic", None)
+            Optional[Dict[Any, Any]]: A dictionary containing the event payload.
 
-    def get_reponse_topic(self):
+        Example:
+            >>> data = {"event": {"topic": "example_topic", "respond_to": "response_topic"}, "payload": {"key1": "value1"}}
+            >>> event = Event(data)
+            >>> print(event.payload)
+            {'key1': 'value1'}
         """
-        Retrieves the 'respond_to' field from the 'event' data. The reponse topic is
-        meant for follow up events, which the receiver sends to the original sender.
+        return self.__data["payload"]
+
+    @property
+    def topic(self) -> str:
+        """
+        Retrieves the 'topic' field from the header of an Event object.
+
+        This method acts as a getter for accessing the 'topic' attribute within
+        the header of an event.
 
         Returns:
-            Any: The value of the 'respond_to' field from the 'event' dictionary, or
-            None if the 'event' key or 'respond_to' key is not present.
+            str: The value of the 'topic' field from the event header.
         """
-        return self.data.get("event", None).get("respond_to", None)
+        return self.header["topic"]
 
-    def is_response_requested(self):
+    @property
+    def response_requested(self) -> bool:
         """
         Checks if a response is requested for the event.
 
@@ -80,9 +118,19 @@ class Event:
         Returns:
             bool: True if a response is requested, False otherwise.
         """
-        if self.data.get("event", None).get("response_requested", None) is True:
-            return True
-        return False
+        return self.header["response_requested"]
+
+    @property
+    def response_topic(self) -> str | None:
+        """
+        Retrieves the 'respond_to' field from the 'event' data. The reponse topic is
+        meant for follow up events, which the receiver sends to the original sender.
+
+        Returns:
+            Any: The value of the 'respond_to' field from the 'event' dictionary, or
+            None if the 'event' key or 'respond_to' key is not present.
+        """
+        return self.header.get("respond_to", None)
 
     def is_response_event(self):
         """
@@ -96,21 +144,21 @@ class Event:
             dictionary, indicating that the event is a response event;
             False otherwise.
         """
-        if self.get_reponse_topic() is None:
+        if self.response_topic is None:
             return False
 
         return True
 
     def __str__(self):
-        event = self.get_event()
-        payload = self.get_payload()
-        topic = self.get_topic()
-        response_topic = self.get_reponse_topic()
-        response_requested = self.is_response_requested()
+        header = self.header
+        payload = self.payload
+        topic = self.topic
+        response_requested = self.response_requested
+        response_topic = self.response_topic
 
         return (
             f"Event({{\n"
-            f"  'event': {event},\n"
+            f"  'header': {header},\n"
             f"  'payload': {payload},\n"
             f"  'topic': {topic},\n"
             f"  'respond_to': {response_topic},\n"
