@@ -68,6 +68,20 @@ class Event:
             raise ValueError("Missing required 'topic' field in event header")
         self.__data = data
 
+    def get_raw_data(self) -> Dict[Any, Any]:
+        """
+        Retrieves the raw event data of the event instance.
+
+        This method returns a dictionary representing the raw data stored in
+        the module's internal data attribute. The returned dictionary is an unmodified
+        version of the original event data that was used to create or update this module.
+        It contains all the information related to the event, such as headers and payloads,
+        without any processing or modification applied by the Event class itself.
+        Returns:
+            Dict[Any, Any]: A dictionary containing raw event data associated with the event instance.
+        """
+        return self.__data
+
     @property
     def header(self) -> Dict[Any, Any]:
         """
