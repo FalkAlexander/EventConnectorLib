@@ -2,7 +2,6 @@ import threading
 import queue
 import logging
 import uuid
-import enum
 import traceback
 import requests
 import json
@@ -20,21 +19,6 @@ class ResponseCallbackError(Exception):
 
 class AwaitEventResponseTimeout(TimeoutError):
     """Raised when an awaited event response is not received within a certain timeout."""
-
-
-class ModuleType(enum.Enum):
-    """
-    Enumeration for different types of ZKMS Modules.
-
-    Attributes:
-    CORE (int): Represents a core module within the ZKMS System.
-    SUPPORT (int): Represents a support module within the ZKMS System.
-    AI (int): Represents an AI module within the ZKMS System.
-    """
-
-    CORE = 0
-    SUPPORT = 1
-    AI = 2
 
 
 class Client:
