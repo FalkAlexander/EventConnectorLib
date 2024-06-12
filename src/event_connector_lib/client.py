@@ -78,7 +78,7 @@ class Client:
     def __process_incoming_events(self) -> None:
         while True:
             event = self.__incoming_events_queue.get()
-            logging.info("[INCOMING EVENT QUEUE] Process: %s", event.get_topic())
+            logging.info("[INCOMING EVENT QUEUE] Process: %s", event.topic)
 
             if self.__receiver_func is None:
                 logging.warn(
@@ -86,11 +86,11 @@ class Client:
                 )
                 continue
 
-            if event.get_topic() in self.__registered_response_callbacks:
+            if event.topic in self.__registered_response_callbacks:
                 logging.debug(
                     "Received an event with a topic that has been registered for a response callback."
                 )
-                self.__registered_response_callbacks[event.get_topic()].put(event)
+                self.__registered_response_callbacks[event.topic].put(event)
                 continue
 
             self.__receiver_func_queue.put(event)
@@ -106,7 +106,7 @@ class Client:
                 #     )
 
                 if isinstance(event, BrokerEvent):
-                    destination_url = event.get_destination()
+                    destination_url = event.destination
                 else:
                     destination_url = (
                         f"http://{self.__broker_host}:{self.__broker_port}/event"
@@ -114,12 +114,10 @@ class Client:
 
                 requests.post(
                     url=destination_url,
-                    json=event.data,
+                    json=event.get_raw_data(),
                     timeout=60,
                 )
-                logging.info(
-                    "Forwarded Event from Outgoing Queue: %s", event.get_topic()
-                )
+                logging.info("Forwarded Event from Outgoing Queue: %s", event.topic)
             except (
                 requests.RequestException,
                 requests.ConnectionError,
@@ -127,15 +125,15 @@ class Client:
                 requests.HTTPError,
             ):
                 traceback.print_exc()
-                logging.error("Error Forwarding Event: %s", event.get_topic())
+                logging.error("Error Forwarding Event: %s", event.topic)
 
     def _put_incoming_event_into_queue(self, event: Event) -> None:
         self.__incoming_events_queue.put(event)
-        logging.info("Put Incoming Event in Queue: %s", event.get_topic())
+        logging.info("Put Incoming Event in Queue: %s", event.topic)
 
     def _put_outgoing_event_into_queue(self, event: Event) -> None:
         self.__outgoing_events_queue.put(event)
-        logging.info("Put Event in Outgoing Queue: %s", event.get_topic())
+        logging.info("Put Event in Outgoing Queue: %s", event.topic)
 
     def _subscribe_topics(self, topics: list[str]) -> None:
         topic_subscription_event_data = {
@@ -320,14 +318,14 @@ class Client:
         if response_callback is None:
             return
 
-        if not event.is_response_requested():
+        if not event.response_requested:
             logging.warning(
                 "Response_callback provided, but the event does not request a response."
             )
             raise ResponseCallbackError(
                 "response_callback provided, but the event does not request a response."
             )
-        if not event.get_reponse_topic():
+        if not event.response_topic:
             logging.warning(
                 "Response_callback provided, but the event does not specify a response topic."
             )
@@ -339,7 +337,7 @@ class Client:
 
         # TODO: Execute __await_event in dedicated thread in order to not block send_event from here on
         self.__await_event(
-            topic=event.get_reponse_topic(),
+            topic=event.response_topic,
             response_callback=response_callback,
             *args,
             **kwargs,
