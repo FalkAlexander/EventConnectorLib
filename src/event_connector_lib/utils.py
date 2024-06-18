@@ -2,6 +2,10 @@ import enum
 from typing import Any, Dict
 
 
+class InvalidEventDataError(Exception):
+    """Raised when the data for creating a module instance is incomplete or invalid."""
+
+
 class Event:
     """
     The Event class encapsulates event-related data and provides various methods
