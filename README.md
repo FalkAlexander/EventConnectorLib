@@ -13,7 +13,7 @@ pip install git+https://git.waldwaechter.de/5G-Waldwaechter/EventConnectorLib
 ## Upgrade
 
 ```sh
-pip install --upgrade --force-reinstall git+https://git.waldwaechter.de/5G-Waldwaechter/EventConnectorLib
+pip install --upgrade --force-reinstall git+ssh://git@git.waldwaechter.de/5G-Waldwaechter/EventConnectorLib.git@main#egg=event-connector-lib
 ```
 
 ## Documentation
