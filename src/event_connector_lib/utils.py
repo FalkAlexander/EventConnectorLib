@@ -385,6 +385,16 @@ class Module:
         """
         self.__topics.difference_update(topics)
 
+    def as_dict(self):
+        return {
+            "name": self.__name,
+            "description": self.__description,
+            "version": self.__version,
+            "type": self.__type.value,
+            "event_handler": self.__event_handler,
+            "topics": list(self.__topics),
+        }
+
     def __str__(self):
         return (
             f"Module(\n"
