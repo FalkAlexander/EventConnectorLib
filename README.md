@@ -7,7 +7,7 @@ EventConnectorLib is a comprehensive library designed to manage low-level event 
 To install the library, use the following pip command with the provided private repository:
 
 ```sh
-pip install git+https://git.waldwaechter.de/5G-Waldwaechter/EventConnectorLib
+pip install git+ssh://git@git.waldwaechter.de/5G-Waldwaechter/EventConnectorLib.git@main#egg=event-connector-lib
 ```
 
 ## Upgrade
