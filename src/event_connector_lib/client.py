@@ -476,6 +476,43 @@ class Client:
     # Util
     #
 
+    def generate_response_event(
+        self, event: Event, response_requested: bool = False
+    ) -> Optional[Event]:
+        """
+        Build and return a response event based on certain conditions.
+
+        This method generates an Event object as a response to the current Event instance if
+        a response was requested and a topic for responding exists. If either of these
+        conditions is not met, this method returns None.
+        Parameters:
+            response_requested (bool): A flag indicating whether a response was explicitly
+                requested for this Event instance. Defaults to False. If True and a response
+                topic is available, it includes the 'respond_to' field in the generated
+                response event.
+        Returns:
+            Optional[Event]: An Event object representing the response event if both conditions
+                are met; otherwise, returns None. The returned Event is constructed based on the
+                generated response data dictionary.
+        """
+        if not event.response_requested or not event.response_topic:
+            return None
+
+        response_data = {
+            "event": {
+                "topic": event.response_topic,
+                "response_requested": response_requested,
+            },
+            "payload": {},
+        }
+
+        if response_requested:
+            response_data["event"][
+                "respond_to"
+            ] = f"{str(uuid.uuid4())}-ResponseEvent-for-{event.response_topic}"
+
+        return Event(data=response_data)
+
     def __str__(self) -> str:
         return (
             f"Client(name={self.name}, description={self.description}, "
