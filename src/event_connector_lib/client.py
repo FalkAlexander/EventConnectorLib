@@ -477,7 +477,10 @@ class Client:
     #
 
     def generate_response_event(
-        self, event: Event, response_requested: bool = False
+        self,
+        source_event: Event,
+        payload: Dict[Any, Any] = {},
+        response_requested: bool = False,
     ) -> Optional[Event]:
         """
         Build and return a response event based on certain conditions.
@@ -495,21 +498,21 @@ class Client:
                 are met; otherwise, returns None. The returned Event is constructed based on the
                 generated response data dictionary.
         """
-        if not event.response_requested or not event.response_topic:
+        if not source_event.response_requested or not source_event.response_topic:
             return None
 
         response_data = {
             "event": {
-                "topic": event.response_topic,
+                "topic": source_event.response_topic,
                 "response_requested": response_requested,
             },
-            "payload": {},
+            "payload": payload,
         }
 
         if response_requested:
             response_data["event"][
                 "respond_to"
-            ] = f"{str(uuid.uuid4())}-ResponseEvent-for-{event.response_topic}"
+            ] = f"{str(uuid.uuid4())}-ResponseEvent-for-{source_event.response_topic}"
 
         return Event(data=response_data)
 
