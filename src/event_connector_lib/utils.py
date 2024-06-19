@@ -126,6 +126,20 @@ class Event:
         return self.header["topic"]
 
     @property
+    def access_token(self) -> str | None:
+        """
+        Retrieves the 'token' field from the header of an Event object.
+
+        This method acts as a getter for accessing the 'token' attribute within
+        the header of an event, which represents an access token. If the 'token'
+        field is not present in the header, this method returns None.
+
+        Returns:
+            str | None: The value of the 'token' field from the event header if it exists, or None otherwise.
+        """
+        return self.header.get("token", None)
+
+    @property
     def response_requested(self) -> bool:
         """
         Checks if a response is requested for the event.
@@ -150,7 +164,19 @@ class Event:
         """
         return self.header.get("respond_to", None)
 
-    def is_response_event(self):
+    def has_access_token(self) -> bool:
+        """
+        Checks if the event header contains an access token.
+
+        This method checks whether the 'header' attribute of this Event instance contains a key named "token". If such a key is present, it means that the event includes an access token, and the method returns True; otherwise, it returns False.
+        Returns:
+            bool: True if the event header contains an access token, False otherwise.
+        """
+        if "token" in self.header:
+            return True
+        return False
+
+    def is_response_event(self) -> bool:
         """
         Checks if the event is a response event.
 
@@ -167,7 +193,7 @@ class Event:
 
         return True
 
-    def __str__(self):
+    def __str__(self) -> str:
         header = self.header
         payload = self.payload
         topic = self.topic
