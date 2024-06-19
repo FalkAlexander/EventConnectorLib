@@ -352,6 +352,15 @@ class Module:
         """
         return list(self.__topics)
 
+    @property
+    def access_token(self) -> str | None:
+        """
+        Returns the current access token that the module uses to authenticate with external services. This is a read-only property. If no access token has been set, this will return None.
+
+        :return: The current access token as a string, or None if no access token has been set.
+        """
+        return self.__token
+
     def add_topic(self, topic: str):
         """
         Adds a new topic to the module's subscription list. If the topic already exists in the subscription list, this method does nothing.
@@ -388,6 +397,15 @@ class Module:
         :type topics: list[str]
         """
         self.__topics.difference_update(topics)
+
+    def set_access_token(self, token: str):
+        """
+        Sets the access token for the module instance. The access token is used to authenticate and authorize requests made by this module.
+
+        :param token: The access token as a string.
+        :type token: str
+        """
+        self.__token = token
 
     def as_dict(self):
         return {
