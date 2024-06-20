@@ -234,6 +234,20 @@ class BrokerEvent(Event):
     def destination(self) -> str:
         return self.__destination
 
+    @staticmethod
+    def from_event(event: Event, destination: str) -> "BrokerEvent":
+        """
+        Create a new BrokerEvent object based on an existing Event instance with only the additional destination parameter.
+
+        :param data: The source Event raw data.
+        :type data: Dict[Any, Any]
+        :param destination: The destination for the BrokerEvent.
+        :type destination: str
+        :return: A new BrokerEvent object initialized with data from the source Event and the provided destination.
+        :rtype: BrokerEvent
+        """
+        return BrokerEvent(data=event.get_raw_data(), destination=destination)
+
 
 class ModuleType(enum.Enum):
     """
