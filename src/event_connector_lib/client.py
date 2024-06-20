@@ -2,9 +2,9 @@ import threading
 import queue
 import logging
 import uuid
-import traceback
 import requests
 import json
+import sys
 from typing import Any, Callable, Dict, Optional
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -113,13 +113,14 @@ class Client:
                 )
                 logging.info("Forwarded Event from Outgoing Queue: %s", event.topic)
             except (
-                requests.exceptions.RequestException,
-                requests.exceptions.ConnectionError,
-                requests.exceptions.ConnectTimeout,
-                requests.exceptions.HTTPError,
-            ):
-                traceback.print_exc()
-                logging.error("Error Forwarding Event: %s", event.topic)
+                requests.RequestException,
+                requests.ConnectionError,
+                requests.ConnectTimeout,
+                requests.HTTPError,
+            ) as ex:
+                logging.error(
+                    "Error Forwarding Event: %s — Reason: %s", event.topic, ex
+                )
 
     def _put_incoming_event_into_queue(self, event: Event) -> None:
         self.__incoming_events_queue.put(event)
@@ -156,7 +157,11 @@ class Client:
         self.send_event(event=Event(data=topic_unsubscription_event_data))
 
     def __start_listening(self, host: str, port: int) -> None:
-        httpd = HTTPServer((host, port), self.__create_http_request_handler)
+        try:
+            httpd = HTTPServer((host, port), self.__create_http_request_handler)
+        except OSError as ex:
+            logging.error("Error starting HTTP Listener. Reason: %s", str(ex))
+            sys.exit(1)
         httpd.serve_forever()
 
     def __create_http_request_handler(
