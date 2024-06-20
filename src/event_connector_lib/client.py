@@ -178,7 +178,7 @@ class Client:
         **kwargs: Any,
     ):
         if topic not in self.__registered_response_callbacks:
-            self.__registered_response_callbacks[topic] = queue.Queue()
+            self.__register_response_topic(topic)
 
         response_queue = self.__registered_response_callbacks[topic]
         try:
@@ -195,10 +195,20 @@ class Client:
                 topic,
             )
             return None
-
-        del self.__registered_response_callbacks[topic]
+        finally:
+            self.__deregister_response_topic(topic)
 
         response_callback(response_event, *args, **kwargs)
+
+    def __register_response_topic(self, topic: str) -> None:
+        self.subscribe_topic(topic)
+        if topic not in self.__registered_response_callbacks:
+            self.__registered_response_callbacks[topic] = queue.Queue()
+
+    def __deregister_response_topic(self, topic: str) -> None:
+        self.unsubscribe_topic(topic)
+        if topic in self.__registered_response_callbacks:
+            del self.__registered_response_callbacks[topic]
 
     #
     # Public API
@@ -313,6 +323,7 @@ class Client:
                 extra_arg2="extra2"
             )
         """
+
         self._put_outgoing_event_into_queue(event)
 
         if response_callback is None:
