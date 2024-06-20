@@ -159,9 +159,11 @@ class Client:
     def __start_listening(self, host: str, port: int) -> None:
         try:
             httpd = HTTPServer((host, port), self.__create_http_request_handler)
+            logging.info("Started HTTP listening on port %s:%s", self.host, self.port)
         except OSError as ex:
-            logging.error("Error starting HTTP Listener. Reason: %s", str(ex))
+            logging.error("Error starting HTTP listener. Reason: %s", str(ex))
             sys.exit(1)
+
         httpd.serve_forever()
 
     def __create_http_request_handler(
