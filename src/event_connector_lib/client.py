@@ -113,10 +113,10 @@ class Client:
                 )
                 logging.info("Forwarded Event from Outgoing Queue: %s", event.topic)
             except (
-                requests.RequestException,
-                requests.ConnectionError,
-                requests.ConnectTimeout,
-                requests.HTTPError,
+                requests.exceptions.RequestException,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.ConnectTimeout,
+                requests.exceptions.HTTPError,
             ):
                 traceback.print_exc()
                 logging.error("Error Forwarding Event: %s", event.topic)
