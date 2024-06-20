@@ -99,12 +99,6 @@ class Client:
         while True:
             event = self.__outgoing_events_queue.get()
             try:
-                # if event.is_response_requested() is True:
-                #     __register_topic_response_handler(
-                #         response_topic=event.get_reponse_topic(),
-                #         topic=event.get_topic(),
-                #     )
-
                 if isinstance(event, BrokerEvent):
                     destination_url = event.destination
                 else:
@@ -330,16 +324,10 @@ class Client:
             return
 
         if not event.response_requested:
-            logging.warning(
-                "Response_callback provided, but the event does not request a response."
-            )
             raise ResponseCallbackError(
                 "response_callback provided, but the event does not request a response."
             )
         if not event.response_topic:
-            logging.warning(
-                "Response_callback provided, but the event does not specify a response topic."
-            )
             raise ResponseCallbackError(
                 "response_callback provided, but the event does not specify a response topic."
             )
