@@ -40,6 +40,8 @@ class Client:
             Placeholder method for subscribing to a topic (not implemented).
     """
 
+    LOG_FORMAT = "%(asctime)s [%(name)s] [%(process)d] %(levelname)s: %(message)s"
+
     __incoming_events_queue: queue.Queue[Event] = queue.Queue()
     __outgoing_events_queue: queue.Queue[Event] = queue.Queue()
     __registered_response_callbacks: Dict[str, queue.Queue[Event]] = {}
@@ -63,6 +65,8 @@ class Client:
         self.version = version
         self.module_type = module_type
 
+        self.__setup_logging()
+
         threading.Thread(target=self.__process_incoming_events, daemon=True).start()
         threading.Thread(target=self.__process_outgoing_events, daemon=True).start()
 
@@ -72,23 +76,37 @@ class Client:
         self.__http_server_thread.start()
 
     #
+    # Logging
+    #
+
+    def __setup_logging(self):
+        formatter = logging.Formatter(self.LOG_FORMAT)
+        logger = logging.getLogger()
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.name = "EventConnectorLib"
+
+    #
     # Event Queue Management
     #
 
     def __process_incoming_events(self) -> None:
         while True:
             event = self.__incoming_events_queue.get()
-            logging.info("[INCOMING EVENT QUEUE] Process: %s", event.topic)
+            logging.info("Processing incoming event in queue: %s", event.topic)
 
             if self.__receiver_func is None:
                 logging.warn(
-                    "Received an event, but no event handler was registered. Discarding event…"
+                    "Received an event, but no event handler was registered. Discarding event with topic %s…",
+                    event.topic,
                 )
                 continue
 
             if event.topic in self.__registered_response_callbacks:
                 logging.debug(
-                    "Received an event with a topic that has been registered for a response callback."
+                    "Received an event with a topic that has been registered for response callback. Putting event in response callback queue %s…",
+                    event.topic,
                 )
                 self.__registered_response_callbacks[event.topic].put(event)
                 continue
@@ -111,7 +129,7 @@ class Client:
                     json=event.get_raw_data(),
                     timeout=60,
                 )
-                logging.info("Forwarded Event from Outgoing Queue: %s", event.topic)
+                logging.info("Forwarded event from outgoing queue: %s", event.topic)
             except (
                 requests.RequestException,
                 requests.ConnectionError,
@@ -119,16 +137,16 @@ class Client:
                 requests.HTTPError,
             ) as ex:
                 logging.error(
-                    "Error Forwarding Event: %s — Reason: %s", event.topic, ex
+                    "Error forwarding event: %s — Reason: %s", event.topic, ex
                 )
 
     def _put_incoming_event_into_queue(self, event: Event) -> None:
         self.__incoming_events_queue.put(event)
-        logging.info("Put Incoming Event in Queue: %s", event.topic)
+        logging.info("Put incoming event in processing queue: %s", event.topic)
 
     def _put_outgoing_event_into_queue(self, event: Event) -> None:
         self.__outgoing_events_queue.put(event)
-        logging.info("Put Event in Outgoing Queue: %s", event.topic)
+        logging.info("Put event in outgoing queue: %s", event.topic)
 
     def _subscribe_topics(self, topics: list[str]) -> None:
         topic_subscription_event_data = {
@@ -159,9 +177,9 @@ class Client:
     def __start_listening(self, host: str, port: int) -> None:
         try:
             httpd = HTTPServer((host, port), self.__create_http_request_handler)
-            logging.info("Started HTTP listening on port %s:%s", self.host, self.port)
+            logging.info("Started HTTP endpoint on port %s:%s", self.host, self.port)
         except OSError as ex:
-            logging.error("Error starting HTTP listener. Reason: %s", str(ex))
+            logging.error("Error starting HTTP endpoint. Reason: %s", str(ex))
             sys.exit(1)
 
         httpd.serve_forever()
