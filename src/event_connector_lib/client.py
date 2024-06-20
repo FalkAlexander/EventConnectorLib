@@ -82,6 +82,8 @@ class Client:
     def __setup_logging(self):
         formatter = logging.Formatter(self.LOG_FORMAT)
         logger = logging.getLogger()
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
