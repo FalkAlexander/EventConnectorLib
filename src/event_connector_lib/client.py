@@ -13,12 +13,32 @@ from urllib.parse import urlparse
 from event_connector_lib.utils import BrokerEvent, Event, ModuleType
 
 
+class BrokerConnectionError(Exception):
+    """Base class for broker connection-related errors."""
+
+
 class ResponseCallbackError(Exception):
     """Raised when a response callback is provided but the event does not request a response."""
 
 
 class AwaitEventResponseTimeout(TimeoutError):
     """Raised when an awaited event response is not received within a certain timeout."""
+
+
+class BrokerUnsupportedError(BrokerConnectionError):
+    """Raised when the broker's response is not in the expected format or contains invalid data."""
+
+    def __init__(self, message: str = "Unsupported broker response event received"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class BrokerConnectionTimeout(BrokerConnectionError):
+    """Raised when a connection to the broker cannot be established within a specified timeout period."""
+
+    def __init__(self, message: str = "Timed out connecting to the broker"):
+        self.message = message
+        super().__init__(self.message)
 
 
 class Client:
@@ -48,6 +68,7 @@ class Client:
     __receiver_func = None
     __http_server_thread = None
     __receiver_func_queue: queue.Queue[Event] = queue.Queue()
+    __access_token = None
 
     def __init__(
         self,
@@ -280,7 +301,7 @@ class Client:
             "event": {
                 "topic": "/zkms/register/module",
                 "respond_to": f"{uuid.uuid4()}",
-                "response_requested": False,
+                "response_requested": True,
             },
             "payload": {
                 "registration": {
@@ -294,8 +315,24 @@ class Client:
             },
         }
 
-        event = Event(data=event_data)
-        self._put_outgoing_event_into_queue(event)
+        try:
+            token_event = self.send_event_and_await_response(Event(data=event_data))
+            self.logger.info("Established connection to broker at %s:%s", host, port)
+        except AwaitEventResponseTimeout as ex:
+            raise BrokerConnectionTimeout(str(ex))
+        except (ResponseCallbackError, TypeError) as ex:
+            raise BrokerUnsupportedError(str(ex))
+
+        if token_event is None:
+            raise BrokerUnsupportedError(str("No response token received."))
+
+        try:
+            token = token_event.get_payload_object("token.data")
+        except KeyError as ex:
+            raise BrokerUnsupportedError(str(ex))
+
+        self.__access_token = token
+        self.logger.info("Successfully gained access token from service registry.")
 
     def send_event(
         self,
