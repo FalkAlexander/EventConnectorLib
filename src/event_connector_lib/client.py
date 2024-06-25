@@ -121,10 +121,12 @@ class Client:
             try:
                 if isinstance(event, BrokerEvent):
                     destination_url = event.destination
-                else:
+                elif self.module_type != ModuleType.BROKER:
                     destination_url = (
                         f"http://{self.__broker_host}:{self.__broker_port}/event"
                     )
+                else:
+                    destination_url = f"http://{self.host}:{self.port}/event"
 
                 requests.post(
                     url=destination_url,

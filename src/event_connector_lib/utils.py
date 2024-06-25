@@ -257,11 +257,13 @@ class ModuleType(enum.Enum):
     CORE (int): Represents a core module within the ZKMS System.
     SUPPORT (int): Represents a support module within the ZKMS System.
     AI (int): Represents an AI module within the ZKMS System.
+    BROKER (int): Represents an module that implementes broker functionality within the ZKMS System.
     """
 
     CORE = 0
     SUPPORT = 1
     AI = 2
+    BROKER = 3
 
 
 class Module:
