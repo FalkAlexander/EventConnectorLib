@@ -279,7 +279,7 @@ class Client:
         event_data = {
             "event": {
                 "topic": "/zkms/register/module",
-                "respond_to": f"{str(uuid.uuid4())}-ResponseEvent-for-/zkms/register/module",
+                "respond_to": f"{uuid.uuid4()}",
                 "response_requested": False,
             },
             "payload": {
@@ -289,7 +289,7 @@ class Client:
                     "version": f"{self.version}",
                     "type": f"{self.module_type}",
                     "eventHandler": f"http://{self.host}:{self.port}/event",
-                    "topics": ["*"],
+                    "topics": [""],
                 }
             },
         }
