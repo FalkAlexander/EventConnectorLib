@@ -81,13 +81,14 @@ class Client:
 
     def __setup_logging(self):
         formatter = logging.Formatter(self.LOG_FORMAT)
-        logger = logging.getLogger()
+        logger = logging.getLogger("EventConnectorLib")
         for handler in logger.handlers[:]:
             logger.removeHandler(handler)
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        logger.name = "EventConnectorLib"
+
+        self.logger = logger
 
     #
     # Event Queue Management
@@ -96,17 +97,17 @@ class Client:
     def __process_incoming_events(self) -> None:
         while True:
             event = self.__incoming_events_queue.get()
-            logging.info("Processing incoming event in queue: %s", event.topic)
+            self.logger.info("Processing incoming event in queue: %s", event.topic)
 
             if self.__receiver_func is None:
-                logging.warn(
+                self.logger.warn(
                     "Received an event, but no event handler was registered. Discarding event with topic %s…",
                     event.topic,
                 )
                 continue
 
             if event.topic in self.__registered_response_callbacks:
-                logging.debug(
+                self.logger.debug(
                     "Received an event with a topic that has been registered for response callback. Putting event in response callback queue %s…",
                     event.topic,
                 )
@@ -133,24 +134,24 @@ class Client:
                     json=event.get_raw_data(),
                     timeout=60,
                 )
-                logging.info("Forwarded event from outgoing queue: %s", event.topic)
+                self.logger.info("Forwarded event from outgoing queue: %s", event.topic)
             except (
                 requests.RequestException,
                 requests.ConnectionError,
                 requests.ConnectTimeout,
                 requests.HTTPError,
             ) as ex:
-                logging.error(
+                self.logger.error(
                     "Error forwarding event: %s — Reason: %s", event.topic, ex
                 )
 
     def _put_incoming_event_into_queue(self, event: Event) -> None:
         self.__incoming_events_queue.put(event)
-        logging.info("Put incoming event in processing queue: %s", event.topic)
+        self.logger.info("Put incoming event in processing queue: %s", event.topic)
 
     def _put_outgoing_event_into_queue(self, event: Event) -> None:
         self.__outgoing_events_queue.put(event)
-        logging.info("Put event in outgoing queue: %s", event.topic)
+        self.logger.info("Put event in outgoing queue: %s", event.topic)
 
     def _subscribe_topics(self, topics: list[str]) -> None:
         topic_subscription_event_data = {
@@ -181,9 +182,11 @@ class Client:
     def __start_listening(self, host: str, port: int) -> None:
         try:
             httpd = HTTPServer((host, port), self.__create_http_request_handler)
-            logging.info("Started HTTP endpoint on port %s:%s", self.host, self.port)
+            self.logger.info(
+                "Started HTTP endpoint on port %s:%s", self.host, self.port
+            )
         except OSError as ex:
-            logging.error("Error starting HTTP endpoint. Reason: %s", str(ex))
+            self.logger.error("Error starting HTTP endpoint. Reason: %s", str(ex))
             sys.exit(1)
 
         httpd.serve_forever()
@@ -207,13 +210,13 @@ class Client:
         try:
             response_event = response_queue.get(timeout=30)
         except queue.Empty:
-            logging.error(
+            self.logger.error(
                 "Canceled awaiting response event with topic %s. Reason: Timeout reached.",
                 topic,
             )
             return None
         except queue.Full:
-            logging.error(
+            self.logger.error(
                 "Canceled awaiting response event with topic %s. Reason: Queue full.",
                 topic,
             )
@@ -496,13 +499,13 @@ class Client:
                     raise RuntimeError("HTTP server thread has not been started.")
                 event = self.__receiver_func_queue.get()
                 if self.__receiver_func is None:
-                    logging.warn(
+                    self.logger.warn(
                         "Received an event, but no event handler was registered. Discarding event…"
                     )
                     continue
                 self.__receiver_func(event)
         except KeyboardInterrupt:
-            logging.info("Shutting down the client.")
+            self.logger.info("Shutting down the client.")
 
     #
     # Util
