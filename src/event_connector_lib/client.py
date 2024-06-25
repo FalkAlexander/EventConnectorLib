@@ -82,12 +82,11 @@ class Client:
     def __setup_logging(self):
         formatter = logging.Formatter(self.LOG_FORMAT)
         logger = logging.getLogger("EventConnectorLib")
-        for handler in logger.handlers[:]:
-            logger.removeHandler(handler)
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-
+        if not logger.hasHandlers():
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
         self.logger = logger
 
     #
