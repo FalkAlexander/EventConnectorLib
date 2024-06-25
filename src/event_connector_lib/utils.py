@@ -193,6 +193,30 @@ class Event:
 
         return True
 
+    def get_payload_object(self, json_path: str):
+        """
+        Retrieve an object from the payload using a JSON path.
+
+        Args:
+            json_path (str): A string representing the JSON path to the desired object.
+
+        Returns:
+            Any: The object retrieved from the JSON path, or None if it doesn't exist.
+
+        Raises:
+            KeyError: If any of the keys in the JSON path do not exist.
+        """
+        keys = json_path.split(".")
+        value = self.payload
+
+        for key in keys:
+            if key in value:
+                value = value[key]
+            else:
+                raise KeyError(f"Key '{json_path}' not found in payload.")
+
+        return value
+
     def __str__(self) -> str:
         header = self.header
         payload = self.payload
