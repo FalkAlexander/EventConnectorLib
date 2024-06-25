@@ -224,12 +224,14 @@ class Client:
         response_callback(response_event, *args, **kwargs)
 
     def __register_response_topic(self, topic: str) -> None:
-        self.subscribe_topic(topic)
+        if self.module_type != ModuleType.BROKER:
+            self.subscribe_topic(topic)
         if topic not in self.__registered_response_callbacks:
             self.__registered_response_callbacks[topic] = queue.Queue()
 
     def __deregister_response_topic(self, topic: str) -> None:
-        self.unsubscribe_topic(topic)
+        if self.module_type != ModuleType.BROKER:
+            self.unsubscribe_topic(topic)
         if topic in self.__registered_response_callbacks:
             del self.__registered_response_callbacks[topic]
 
