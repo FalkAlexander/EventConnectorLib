@@ -86,7 +86,7 @@ class Client:
         self.version = version
         self.module_type = module_type
 
-        self.__setup_logging()
+        self.logger = self.__setup_logging()
 
         threading.Thread(target=self.__process_incoming_events, daemon=True).start()
         threading.Thread(target=self.__process_outgoing_events, daemon=True).start()
@@ -100,15 +100,19 @@ class Client:
     # Logging
     #
 
-    def __setup_logging(self):
+    def __setup_logging(self) -> logging.Logger:
         formatter = logging.Formatter(self.LOG_FORMAT)
         logger = logging.getLogger("EventConnectorLib")
+
         if not logger.hasHandlers():
             handler = logging.StreamHandler(sys.stdout)
             handler.setFormatter(formatter)
             logger.addHandler(handler)
+
         logger.setLevel(logging.INFO)
-        self.logger = logger
+        logger.propagate = False
+
+        return logger
 
     #
     # Event Queue Management
