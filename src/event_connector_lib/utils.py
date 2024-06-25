@@ -193,7 +193,7 @@ class Event:
 
         return True
 
-    def get_payload_object(self, json_path: str):
+    def get_payload_object(self, json_path: str) -> Any:
         """
         Retrieve an object from the payload using a JSON path.
 
