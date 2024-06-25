@@ -278,7 +278,7 @@ class Client:
         """
         self.__receiver_func = receiver_func
 
-    def connect_broker(self, host: str, port: int) -> None:
+    def connect_broker(self, host: str, port: int, request_token: bool = True) -> None:
         """
         Connects to a broker using the provided host and port, then sends a registration event.
 
@@ -315,24 +315,31 @@ class Client:
             },
         }
 
-        try:
-            token_event = self.send_event_and_await_response(Event(data=event_data))
-            self.logger.info("Established connection to broker at %s:%s", host, port)
-        except AwaitEventResponseTimeout as ex:
-            raise BrokerConnectionTimeout(str(ex))
-        except (ResponseCallbackError, TypeError) as ex:
-            raise BrokerUnsupportedError(str(ex))
+        registration_event = Event(data=event_data)
 
-        if token_event is None:
-            raise BrokerUnsupportedError(str("No response token received."))
+        if request_token:
+            try:
+                token_event = self.send_event_and_await_response(registration_event)
+                self.logger.info(
+                    "Established connection to broker at %s:%s", host, port
+                )
+            except AwaitEventResponseTimeout as ex:
+                raise BrokerConnectionTimeout(str(ex))
+            except (ResponseCallbackError, TypeError) as ex:
+                raise BrokerUnsupportedError(str(ex))
 
-        try:
-            token = token_event.get_payload_object("token.data")
-        except KeyError as ex:
-            raise BrokerUnsupportedError(str(ex))
+            if token_event is None:
+                raise BrokerUnsupportedError(str("No response token received."))
 
-        self.__access_token = token
-        self.logger.info("Successfully gained access token from service registry.")
+            try:
+                token = token_event.get_payload_object("token.data")
+            except KeyError as ex:
+                raise BrokerUnsupportedError(str(ex))
+
+            self.__access_token = token
+            self.logger.info("Successfully gained access token from service registry.")
+        else:
+            self.send_event(registration_event)
 
     def send_event(
         self,
