@@ -1,3 +1,4 @@
+import importlib
 from typing import Callable, Dict
 from event_connector_lib.client import Client
 from event_connector_lib.utils import Event
@@ -25,3 +26,13 @@ class EventReceiver:
         if handler is None:
             raise ValueError(f"No handler registered for topic '{event.topic}'")
         return handler(event)
+
+    def load_handlers_from_module(self, module_name: str) -> None:
+        """Load event handlers from a specified module."""
+        module = importlib.import_module(module_name)
+        if hasattr(module, "initialize_handlers"):
+            module.initialize_handlers(self)
+        else:
+            raise ImportError(
+                f"Module '{module_name}' does not have an 'initialize_handlers' function"
+            )
