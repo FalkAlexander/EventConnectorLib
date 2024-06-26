@@ -76,15 +76,15 @@ class Client:
         description: str,
         version: str,
         module_type: ModuleType,
+        topics: list[str],
     ) -> None:
-        self.host = host
-        self.port = port
-        self.name = name
-        self.description = description
-        self.version = version
-        self.module_type = module_type
-
-        self.logger = self.__setup_logging()
+        self.__host = host
+        self.__port = port
+        self.__name = name
+        self.__description = description
+        self.__version = version
+        self.__module_type = module_type
+        self.__topics = topics
 
         threading.Thread(target=self.__process_incoming_events, daemon=True).start()
         threading.Thread(target=self.__process_outgoing_events, daemon=True).start()
@@ -95,22 +95,36 @@ class Client:
         self.__http_server_thread.start()
 
     #
-    # Logging
+    # Properties
     #
 
-    def __setup_logging(self) -> logging.Logger:
-        formatter = logging.Formatter(self.LOG_FORMAT)
-        logger = logging.getLogger("EventConnectorLib")
+    @property
+    def host(self) -> str:
+        return self.__host
 
-        if not logger.hasHandlers():
-            handler = logging.StreamHandler(sys.stdout)
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
+    @property
+    def port(self) -> int:
+        return self.__port
 
-        logger.setLevel(logging.INFO)
-        logger.propagate = False
+    @property
+    def name(self) -> str:
+        return self.__name
 
-        return logger
+    @property
+    def description(self) -> str:
+        return self.__description
+
+    @property
+    def version(self) -> str:
+        return self.__version
+
+    @property
+    def module_type(self) -> ModuleType:
+        return self.__module_type
+
+    @property
+    def topics(self) -> list[str]:
+        return self.__topics
 
     #
     # Event Queue Management
@@ -308,7 +322,7 @@ class Client:
                     "version": f"{self.version}",
                     "type": f"{self.module_type}",
                     "eventHandler": f"http://{self.host}:{self.port}/event",
-                    "topics": [""],
+                    "topics": f"{self.topics}",
                 }
             },
         }
