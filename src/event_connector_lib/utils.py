@@ -152,6 +152,17 @@ class Event:
         """
         return self.header["response_requested"]
 
+    @response_requested.setter
+    def response_requested(self, requested: bool) -> None:
+        """
+        Setter method to update the 'response_requested' field in the event header.
+
+        This setter allows you to modify the value of the 'response_requested' field within the 'header' attribute of this Event instance. The 'response_requested' field indicates whether a response is requested for the event. You can use this method to change this status by providing a boolean value as an argument.
+        Args:
+            requested (bool): A boolean indicating whether a response is requested. True if a response is needed, False otherwise.
+        """
+        self.header["response_requested"] = requested
+
     @property
     def response_topic(self) -> str | None:
         """
@@ -478,7 +489,7 @@ class Module:
             "name": self.__name,
             "description": self.__description,
             "version": self.__version,
-            "type": self.__type.value,
+            "type": self.__type,
             "event_handler": self.__event_handler,
             "topics": list(self.__topics),
         }
@@ -489,7 +500,7 @@ class Module:
             f"\tname={self.__name},\n"
             f"\tdescription={self.__description},\n"
             f"\tversion={self.__version},\n"
-            f"\ttype={self.__type.value},\n"
+            f"\ttype={self.__type},\n"
             f"\tevent_handler={self.__event_handler},\n"
             f"\ttopics={list(self.__topics)}\n)"
         )

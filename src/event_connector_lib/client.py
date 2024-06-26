@@ -319,17 +319,17 @@ class Client:
                 "registration": {
                     "name": f"{self.name}",
                     "description": f"{self.description}",
-                    "version": f"{self.version}",
-                    "type": f"{self.module_type}",
+                    "version": self.version,
+                    "type": self.module_type.value,
                     "eventHandler": f"http://{self.host}:{self.port}/event",
-                    "topics": f"{self.topics}",
+                    "topics": self.topics,
                 }
             },
         }
 
-        registration_event = Event(data=event_data)
-
         if request_token:
+            registration_event = Event(data=event_data)
+
             try:
                 token_event = self.send_event_and_await_response(registration_event)
                 logger.info("Established connection to broker at %s:%s", host, port)
@@ -349,6 +349,9 @@ class Client:
             self.__access_token = token
             logger.info("Successfully gained access token from service registry.")
         else:
+            registration_event = Event(data=event_data)
+            registration_event.response_requested = False
+
             self.send_event(registration_event)
 
     def send_event(
