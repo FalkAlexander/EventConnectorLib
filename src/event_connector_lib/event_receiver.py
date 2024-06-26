@@ -1,6 +1,6 @@
 from typing import Callable, Dict
-from client import Client
-from utils import Event
+from event_connector_lib.client import Client
+from event_connector_lib.utils import Event
 
 
 class EventReceiver:
