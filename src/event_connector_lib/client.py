@@ -1,6 +1,5 @@
 import threading
 import queue
-import logging
 import uuid
 import requests
 import json
@@ -9,6 +8,7 @@ from typing import Any, Callable, Dict, Optional
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
+from logger import logger
 
 from event_connector_lib.utils import BrokerEvent, Event, ModuleType
 
@@ -59,8 +59,6 @@ class Client:
         subscribe_topic(topic: str) -> None:
             Placeholder method for subscribing to a topic (not implemented).
     """
-
-    LOG_FORMAT = "%(asctime)s [%(name)s] [%(process)d] %(levelname)s: %(message)s"
 
     __incoming_events_queue: queue.Queue[Event] = queue.Queue()
     __outgoing_events_queue: queue.Queue[Event] = queue.Queue()
@@ -121,17 +119,17 @@ class Client:
     def __process_incoming_events(self) -> None:
         while True:
             event = self.__incoming_events_queue.get()
-            self.logger.info("Processing incoming event in queue: %s", event.topic)
+            logger.info("Processing incoming event in queue: %s", event.topic)
 
             if self.__receiver_func is None:
-                self.logger.warn(
+                logger.warn(
                     "Received an event, but no event handler was registered. Discarding event with topic %s…",
                     event.topic,
                 )
                 continue
 
             if event.topic in self.__registered_response_callbacks:
-                self.logger.debug(
+                logger.debug(
                     "Received an event with a topic that has been registered for response callback. Putting event in response callback queue %s…",
                     event.topic,
                 )
@@ -158,24 +156,22 @@ class Client:
                     json=event.get_raw_data(),
                     timeout=60,
                 )
-                self.logger.info("Forwarded event from outgoing queue: %s", event.topic)
+                logger.info("Forwarded event from outgoing queue: %s", event.topic)
             except (
                 requests.RequestException,
                 requests.ConnectionError,
                 requests.ConnectTimeout,
                 requests.HTTPError,
             ) as ex:
-                self.logger.error(
-                    "Error forwarding event: %s — Reason: %s", event.topic, ex
-                )
+                logger.error("Error forwarding event: %s — Reason: %s", event.topic, ex)
 
     def _put_incoming_event_into_queue(self, event: Event) -> None:
         self.__incoming_events_queue.put(event)
-        self.logger.info("Put incoming event in processing queue: %s", event.topic)
+        logger.info("Put incoming event in processing queue: %s", event.topic)
 
     def _put_outgoing_event_into_queue(self, event: Event) -> None:
         self.__outgoing_events_queue.put(event)
-        self.logger.info("Put event in outgoing queue: %s", event.topic)
+        logger.info("Put event in outgoing queue: %s", event.topic)
 
     def _subscribe_topics(self, topics: list[str]) -> None:
         topic_subscription_event_data = {
@@ -206,11 +202,9 @@ class Client:
     def __start_listening(self, host: str, port: int) -> None:
         try:
             httpd = HTTPServer((host, port), self.__create_http_request_handler)
-            self.logger.info(
-                "Started HTTP endpoint on port %s:%s", self.host, self.port
-            )
+            logger.info("Started HTTP endpoint on %s:%s/event", self.host, self.port)
         except OSError as ex:
-            self.logger.error("Error starting HTTP endpoint. Reason: %s", str(ex))
+            logger.error("Error starting HTTP endpoint. Reason: %s", str(ex))
             sys.exit(1)
 
         httpd.serve_forever()
@@ -234,13 +228,13 @@ class Client:
         try:
             response_event = response_queue.get(timeout=30)
         except queue.Empty:
-            self.logger.error(
+            logger.error(
                 "Canceled awaiting response event with topic %s. Reason: Timeout reached.",
                 topic,
             )
             return None
         except queue.Full:
-            self.logger.error(
+            logger.error(
                 "Canceled awaiting response event with topic %s. Reason: Queue full.",
                 topic,
             )
@@ -324,9 +318,7 @@ class Client:
         if request_token:
             try:
                 token_event = self.send_event_and_await_response(registration_event)
-                self.logger.info(
-                    "Established connection to broker at %s:%s", host, port
-                )
+                logger.info("Established connection to broker at %s:%s", host, port)
             except AwaitEventResponseTimeout as ex:
                 raise BrokerConnectionTimeout(str(ex))
             except (ResponseCallbackError, TypeError) as ex:
@@ -341,7 +333,7 @@ class Client:
                 raise BrokerUnsupportedError(str(ex))
 
             self.__access_token = token
-            self.logger.info("Successfully gained access token from service registry.")
+            logger.info("Successfully gained access token from service registry.")
         else:
             self.send_event(registration_event)
 
@@ -546,13 +538,13 @@ class Client:
                     raise RuntimeError("HTTP server thread has not been started.")
                 event = self.__receiver_func_queue.get()
                 if self.__receiver_func is None:
-                    self.logger.warn(
+                    logger.warn(
                         "Received an event, but no event handler was registered. Discarding event…"
                     )
                     continue
                 self.__receiver_func(event)
         except KeyboardInterrupt:
-            self.logger.info("Shutting down the client.")
+            logger.info("Shutting down the client.")
 
     #
     # Util
