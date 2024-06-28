@@ -63,7 +63,7 @@ class Client:
     __incoming_events_queue: queue.Queue[Event] = queue.Queue()
     __outgoing_events_queue: queue.Queue[Event] = queue.Queue()
     __registered_response_callbacks: Dict[str, queue.Queue[Event]] = {}
-    __receiver_func = None
+    __event_handlers: Dict[str, Callable[[Event], None]] = {}
     __http_server_thread = None
     __receiver_func_queue: queue.Queue[Event] = queue.Queue()
     __access_token = None
@@ -130,12 +130,18 @@ class Client:
     # Event Queue Management
     #
 
+    def __get_topic_handler(self, topic: str):
+        if topic in self.__event_handlers:
+            handler = self.__event_handlers[topic]
+            return handler
+
     def __process_incoming_events(self) -> None:
         while True:
             event = self.__incoming_events_queue.get()
             logger.info("Processing incoming event in queue: %s", event.topic)
 
-            if self.__receiver_func is None:
+            receiver_func = self.__get_topic_handler(event.topic)
+            if receiver_func is None:
                 logger.warn(
                     "Received an event, but no event handler was registered. Discarding event with topic %s…",
                     event.topic,
@@ -289,6 +295,17 @@ class Client:
             client.set_event_handler(my_event_handler)
         """
         self.__receiver_func = receiver_func
+
+    def topic_handler(
+        self, topic: str
+    ) -> Callable[[Callable[[Event], None]], Callable[[Event], None]]:
+        """Register an event handler function for the specified topic."""
+
+        def decorator(f: Callable[[Event], None]) -> Callable[[Event], None]:
+            self.__event_handlers[topic] = f
+            return f
+
+        return decorator
 
     def connect_broker(self, host: str, port: int, request_token: bool = True) -> None:
         """
@@ -554,12 +571,14 @@ class Client:
                 if self.__http_server_thread is None:
                     raise RuntimeError("HTTP server thread has not been started.")
                 event = self.__receiver_func_queue.get()
-                if self.__receiver_func is None:
+
+                receiver_func = self.__get_topic_handler(event.topic)
+                if receiver_func is None:
                     logger.warn(
                         "Received an event, but no event handler was registered. Discarding event…"
                     )
                     continue
-                self.__receiver_func(event)
+                receiver_func(event)
         except KeyboardInterrupt:
             logger.info("Shutting down the client.")
 
