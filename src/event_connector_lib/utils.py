@@ -504,3 +504,14 @@ class Module:
             f"\tevent_handler={self.__event_handler},\n"
             f"\ttopics={list(self.__topics)}\n)"
         )
+
+    @staticmethod
+    def from_dict(module_dict: Dict[Any, Any]) -> "Module":
+        return Module(
+            name=module_dict.get("name", ""),
+            description=module_dict.get("description", ""),
+            version=module_dict.get("version", ""),
+            type=module_dict.get("type", ""),
+            event_handler=module_dict.get("event_handler", ""),
+            topics=module_dict.get("topics", ""),
+        )
