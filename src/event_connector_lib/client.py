@@ -47,9 +47,6 @@ class Client:
     and communicate with a broker.
 
     Methods:
-        set_event_handler(receiver_func: Callable[[Event], None]) -> None:
-            Registers a function to handle incoming events.
-
         connect_broker(host: str, port: int) -> None:
             Connects to a broker and sends a registration event.
 
@@ -131,8 +128,11 @@ class Client:
     #
 
     def __get_topic_handler(self, topic: str):
+        if "*" in self.__event_handlers:
+            return self.__event_handlers.get("*")
+
         if topic in self.__event_handlers:
-            handler = self.__event_handlers[topic]
+            handler = self.__event_handlers.get(topic, None)
             return handler
 
     def __process_incoming_events(self) -> None:
@@ -279,22 +279,6 @@ class Client:
     #
     # Public API
     #
-
-    def set_event_handler(self, receiver_func: Callable[[Event], None]) -> None:
-        """
-        Registers a function to handle incoming events.
-
-        Args:
-            receiver_func (Callable[[Event], None]): A function that takes an Event
-                                                     as its parameter and handles it.
-
-        Example:
-            def my_event_handler(event: Event):
-                print(f"Received event with topic: {event.get_topic()}")
-
-            client.set_event_handler(my_event_handler)
-        """
-        self.__receiver_func = receiver_func
 
     def topic_handler(
         self, topic: str
