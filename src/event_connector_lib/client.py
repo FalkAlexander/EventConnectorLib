@@ -410,7 +410,7 @@ class Client:
             )
         """
 
-        if event.response_topic:
+        if event.response_topic and response_callback:
             if (
                 event.response_topic not in self.__registered_response_callbacks
                 and event.response_topic != "/zkms/register/topic"
