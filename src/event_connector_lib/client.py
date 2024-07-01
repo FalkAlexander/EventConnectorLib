@@ -204,7 +204,10 @@ class Client:
                 "topics": topics,
             },
         }
-        self.send_event(event=Event(data=topic_subscription_event_data))
+        event = Event(data=topic_subscription_event_data)
+        if self.__access_token:
+            event.set_access_token = self.__access_token
+        self.send_event(event)
 
     def _unsubscribe_topics(self, topics: list[str]) -> None:
         topic_unsubscription_event_data = {
@@ -217,7 +220,10 @@ class Client:
                 "topics": topics,
             },
         }
-        self.send_event(event=Event(data=topic_unsubscription_event_data))
+        event = Event(data=topic_unsubscription_event_data)
+        if self.__access_token:
+            event.set_access_token = self.__access_token
+        self.send_event(event)
 
     def __start_listening(self, host: str, port: int) -> None:
         try:
@@ -324,7 +330,7 @@ class Client:
                     "version": self.version,
                     "type": self.module_type.value,
                     "eventHandler": f"http://{self.host}:{self.port}/event",
-                    "topics": self.topics,
+                    "topics": ["*"],
                 }
             },
         }
@@ -353,6 +359,10 @@ class Client:
                 "Successfully gained access token '%s' from service registry.",
                 self.__access_token,
             )
+
+            if self.topics != ["*"]:
+                self.subscribe_topics(self.topics)
+                self.unsubscribe_topic("*")
         else:
             registration_event = Event(data=event_data)
             registration_event.response_requested = False

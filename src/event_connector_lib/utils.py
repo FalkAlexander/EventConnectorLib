@@ -187,6 +187,20 @@ class Event:
             return True
         return False
 
+    @access_token.setter
+    def set_access_token(self, token: str):
+        """
+        Sets an access token in the event header.
+
+        This method acts as a setter for adding or updating an "access token" within
+        the 'header' attribute of this Event instance. The provided access token is stored under
+        the key "token" in the header, allowing authentication during event handling.
+
+        Args:
+            token (str): A string representing the access token to be set for the event.
+        """
+        self.header["token"] = token
+
     def is_response_event(self) -> bool:
         """
         Checks if the event is a response event.
