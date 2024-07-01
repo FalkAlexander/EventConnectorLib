@@ -241,10 +241,11 @@ class Client:
         *args: Any,
         **kwargs: Any,
     ):
-        if topic not in self.__registered_response_callbacks:
-            self.__register_response_topic(topic)
+        response_queue = self.__registered_response_callbacks.get(topic, None)
 
-        response_queue = self.__registered_response_callbacks[topic]
+        if response_queue is None:
+            return
+
         try:
             response_event = response_queue.get(timeout=30)
         except queue.Empty:
@@ -408,6 +409,13 @@ class Client:
                 extra_arg2="extra2"
             )
         """
+
+        if event.response_topic:
+            if (
+                event.response_topic not in self.__registered_response_callbacks
+                and event.response_topic != "/zkms/register/topic"
+            ):
+                self.__register_response_topic(event.response_topic)
 
         self._put_outgoing_event_into_queue(event)
 
