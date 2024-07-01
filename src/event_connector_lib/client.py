@@ -349,7 +349,10 @@ class Client:
                 raise BrokerUnsupportedError(str(ex))
 
             self.__access_token = token
-            logger.info("Successfully gained access token from service registry.")
+            logger.info(
+                "Successfully gained access token '%s' from service registry.",
+                self.__access_token,
+            )
         else:
             registration_event = Event(data=event_data)
             registration_event.response_requested = False
