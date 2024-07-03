@@ -150,7 +150,10 @@ class Event:
         Returns:
             bool: True if a response is requested, False otherwise.
         """
-        return self.header["response_requested"]
+        if "response_requested" not in self.header:
+            return self.header["response_requested"]
+        else:
+            return False
 
     @response_requested.setter
     def response_requested(self, requested: bool) -> None:
