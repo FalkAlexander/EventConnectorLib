@@ -150,7 +150,7 @@ class Event:
         Returns:
             bool: True if a response is requested, False otherwise.
         """
-        if "response_requested" not in self.header:
+        if "response_requested" in self.header:
             return self.header["response_requested"]
         else:
             return False
