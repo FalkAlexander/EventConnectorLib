@@ -74,6 +74,7 @@ class Client:
         version: str,
         module_type: ModuleType,
         topics: list[str],
+        bind_host: str | None = None,
     ) -> None:
         self.__host = host
         self.__port = port
@@ -82,12 +83,18 @@ class Client:
         self.__version = version
         self.__module_type = module_type
         self.__topics = topics
+        if bind_host is None:
+            self.__bind_host = host
+        else:
+            self.__bind_host = bind_host
 
         threading.Thread(target=self.__process_incoming_events, daemon=True).start()
         threading.Thread(target=self.__process_outgoing_events, daemon=True).start()
 
         self.__http_server_thread = threading.Thread(
-            target=self.__start_listening, args=(host, port), daemon=True
+            target=self.__start_listening,
+            args=(self.__bind_host, self.__port),
+            daemon=True,
         )
         self.__http_server_thread.start()
 
