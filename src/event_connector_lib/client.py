@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Optional
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
-from logger import logger
+from event_connector_lib.logger import logger
 
 from event_connector_lib.utils import BrokerEvent, Event, ModuleType
 
