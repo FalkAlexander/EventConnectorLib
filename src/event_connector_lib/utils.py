@@ -348,6 +348,7 @@ class Module:
         type: ModuleType,
         event_handler: str,
         topics: list[str],
+        access_token: None | str = None,
     ):
         """
         Initializes a new instance of the module.
@@ -386,6 +387,7 @@ class Module:
         self.__type = type
         self.__event_handler = event_handler
         self.__topics = set(topics)
+        self.__token = access_token
 
     @property
     def name(self) -> str:
@@ -509,6 +511,7 @@ class Module:
             "type": self.__type,
             "event_handler": self.__event_handler,
             "topics": list(self.__topics),
+            "access_token": self.__token,
         }
 
     def __str__(self):
@@ -519,7 +522,8 @@ class Module:
             f"\tversion={self.__version},\n"
             f"\ttype={self.__type},\n"
             f"\tevent_handler={self.__event_handler},\n"
-            f"\ttopics={list(self.__topics)}\n)"
+            f"\ttopics={list(self.__topics)},\n"
+            f"\taccess_token={self.__token}\n)"
         )
 
     @staticmethod
@@ -531,4 +535,5 @@ class Module:
             type=module_dict.get("type", ""),
             event_handler=module_dict.get("event_handler", ""),
             topics=module_dict.get("topics", ""),
+            access_token=module_dict.get("access_token", None),
         )
