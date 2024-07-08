@@ -221,7 +221,7 @@ class Event:
 
         return True
 
-    def get_payload_object(self, json_path: str) -> Any:
+    def get_payload_object(self, json_path: str, raise_exception: bool = True) -> Any:
         """
         Retrieve an object from the payload using a JSON path.
 
@@ -241,7 +241,10 @@ class Event:
             if key in value:
                 value = value[key]
             else:
-                raise KeyError(f"Key '{json_path}' not found in payload.")
+                if raise_exception:
+                    raise KeyError(f"Key '{json_path}' not found in payload.")
+                else:
+                    return None
 
         return value
 
