@@ -168,29 +168,32 @@ class Client:
     def __process_outgoing_events(self) -> None:
         while True:
             event = self.__outgoing_events_queue.get()
-            try:
-                if isinstance(event, BrokerEvent):
-                    destination_url = event.destination
-                elif self.module_type != ModuleType.BROKER:
-                    destination_url = (
-                        f"http://{self.__broker_host}:{self.__broker_port}/event"
-                    )
-                else:
-                    destination_url = f"http://{self.host}:{self.port}/event"
+            threading.Thread(target=self.__post_request, args=(event,)).start()
 
-                requests.post(
-                    url=destination_url,
-                    json=event.get_raw_data(),
-                    timeout=60,
+    def __post_request(self, event: Event) -> None:
+        try:
+            if isinstance(event, BrokerEvent):
+                destination_url = event.destination
+            elif self.module_type != ModuleType.BROKER:
+                destination_url = (
+                    f"http://{self.__broker_host}:{self.__broker_port}/event"
                 )
-                logger.info("Forwarded event from outgoing queue: %s", event.topic)
-            except (
-                requests.RequestException,
-                requests.ConnectionError,
-                requests.ConnectTimeout,
-                requests.HTTPError,
-            ) as ex:
-                logger.error("Error forwarding event: %s — Reason: %s", event.topic, ex)
+            else:
+                destination_url = f"http://{self.host}:{self.port}/event"
+
+            requests.post(
+                url=destination_url,
+                json=event.get_raw_data(),
+                timeout=60,
+            )
+            logger.info("Forwarded event from outgoing queue: %s", event.topic)
+        except (
+            requests.RequestException,
+            requests.ConnectionError,
+            requests.ConnectTimeout,
+            requests.HTTPError,
+        ) as ex:
+            logger.error("Error forwarding event: %s — Reason: %s", event.topic, ex)
 
     def _put_incoming_event_into_queue(self, event: Event) -> None:
         self.__incoming_events_queue.put(event)
